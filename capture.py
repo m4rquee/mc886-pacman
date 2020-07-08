@@ -838,7 +838,8 @@ def readCommand( argv ):
     import captureGraphicsDisplay
     # Hack for agents writing to the display
     captureGraphicsDisplay.FRAME_TIME = 0
-    args['display'] = captureGraphicsDisplay.PacmanGraphics(options.red, options.blue, options.zoom, 0, capture=True)
+    args['display'] = captureGraphicsDisplay.PacmanGraphics(options.red, options.red_name, options.blue,
+                                                            options.blue_name, options.zoom, 0, capture=True)
     import __main__
     __main__.__dict__['_display'] = args['display']
 

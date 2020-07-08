@@ -112,7 +112,6 @@ class InfoPane:
                           "bold")
 
     # Add red team name on the left (besides SCORE:) with color TEAM_COLORS[0] (red)
-    print(self.redTeam)
     self.redText = text(self.toScreen(230, 0), TEAM_COLORS[0], self._redScoreString(), "Consolas", self.fontSize,
                          "bold")
 
@@ -193,7 +192,7 @@ class InfoPane:
 
 
 class PacmanGraphics:
-  def __init__(self, redTeam, blueTeam, zoom=1.0, frameTime=0.0, capture=False):
+  def __init__(self, redTeam, redName, blueTeam, blueName, zoom=1.0, frameTime=0.0, capture=False):
     self.expandedCells = []
     self.have_window = 0
     self.currentGhostImages = {}
@@ -204,6 +203,13 @@ class PacmanGraphics:
     self.frameTime = frameTime
     self.redTeam = redTeam
     self.blueTeam = blueTeam
+
+    self.redName = redTeam
+    if redName:
+      self.redName = redName
+    self.blueName = blueTeam
+    if blueName:
+      self.blueName = blueName
 
   def initialize(self, state, isBlue = False):
     self.isBlue = isBlue
@@ -223,7 +229,7 @@ class PacmanGraphics:
     self.width = layout.width
     self.height = layout.height
     self.make_window(self.width, self.height)
-    self.infoPane = InfoPane(layout, self.gridSize, self.redTeam, self.blueTeam)
+    self.infoPane = InfoPane(layout, self.gridSize, self.redName, self.blueName)
     self.currentState = layout
 
   def drawDistributions(self, state):
