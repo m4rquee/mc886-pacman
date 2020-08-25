@@ -15,9 +15,11 @@ import multiprocessing
 import os
 import pickle
 import random
+import shutil
 import smtplib
 import sys
-import urllib2
+import tempfile
+import urllib.request as request
 import zipfile
 from contextlib import contextmanager
 from email.mime.application import MIMEApplication
@@ -144,15 +146,15 @@ def create_secrets(secrets_file=DEFAULT_SECRETS):
 
     secrets = {}
     try:
-        with open(secrets_file, 'r') as f:
+        with open(secrets_file, 'rb') as f:
             secrets = pickle.load(f)
     except:
         pass
     for key, prompt in SECRETS_KEYS:
         if key in secrets:
             prompt += " (now: \"{}\")".format(secrets[key])
-        secrets[key] = raw_input(prompt + ": ").strip() or secrets.get(key, '')
-    with open(secrets_file, 'w') as f:
+        secrets[key] = input(prompt + ": ").strip() or secrets.get(key, '')
+    with open(secrets_file, 'wb') as f:
         pickle.dump(secrets, f)
 
 
@@ -161,7 +163,7 @@ def load_secrets(secrets_file=DEFAULT_SECRETS):
     Load data from a secrets file and check if all required fields are
     present.
     """
-    with open(secrets_file, 'r') as f:
+    with open(secrets_file, 'rb') as f:
         secrets = pickle.load(f)
     missing = []
     for key, _ in SECRETS_KEYS:
@@ -463,9 +465,36 @@ class Record:
         """
         if type(self) != type(other):
             return -1
+        a = self.points
+        b = other.points
         if self.score() != other.score():
-            return cmp(self.score(), other.score())
-        return cmp(self.points, other.points)
+            a = self.score()
+            b = other.score()
+        return (a > b) - (a < b)
+
+    def __lt__(self, other):
+        """
+        Defines self < other.
+        """
+        return self.__cmp__(other) < 0
+
+    def __le__(self, other):
+        """
+        Defines self <= other.
+        """
+        return self.__cmp__(other) <= 0
+
+    def __gt__(self, other):
+        """
+        Defines self > other.
+        """
+        return self.__cmp__(other) > 0
+
+    def __ge__(self, other):
+        """
+        Defines self >= other.
+        """
+        return self.__cmp__(other) >= 0
 
     def __add__(self, other):
         """
@@ -792,17 +821,26 @@ def download_student_data(secrets):
     url = secrets['download_url']
     if url.startswith('https://surfdrive') and not url.endswith('/download'):
         url += '/download'
-    response = urllib2.urlopen(url)
+    response = request.urlopen(url)
     with open('students.zip', 'wb') as f:
         f.write(response.read())
         logging.info("Downloading student data succesful.")
 
     # If the download was succesful, delete the old data.
-    for old_file in os.listdir('students'):
-        if old_file == '__init__.py':
-            continue
-        else:
-            os.remove(os.path.join('students', old_file))
+    with tempfile.TemporaryDirectory(prefix="pacman") as tmpdirname:
+        has_init = False
+        src_dir = os.path.abspath('students')
+        init_name = '__init__.py'
+        init_src = os.path.join(src_dir, '__init__.py')
+        init_dest = os.path.join(tmpdirname, init_name)
+
+        if os.path.isfile(init_src):
+            has_init = True
+            shutil.move(init_src, tmpdirname)
+        shutil.rmtree(src_dir)
+        os.makedirs(src_dir)
+        if has_init:
+            shutil.move(init_dest, src_dir)
 
     # Unpack the downloaded zip file.
     zf = zipfile.ZipFile('students.zip')
@@ -918,7 +956,7 @@ def select_file(directory, extension):
         fmt = "{{:{}d}}.  {{}}".format(padding)
         for i, f in enumerate(files):
             print(fmt.format(i, f))
-        file_index = int(raw_input("Choose your zip to upload: "))
+        file_index = int(input("Choose your zip to upload: "))
         if file_index < 0 or file_index >= len(files):
             raise IndexError("Your input i should be 0 <= i < {}".format(len(files)))
         filename = files[file_index]
@@ -946,9 +984,9 @@ def zip_results(output_dir, remove_src=False):
     return output_dir + ".zip"
 
 
-class MethodRequest(urllib2.Request):
+class MethodRequest(request.Request):
     """
-    Enables urllib2.Request with other HTTP methods than GET or PUT.
+    Enables request.Request with other HTTP methods than GET or PUT.
 
     Copied from https://gist.github.com/logic/2715756
     """
@@ -958,12 +996,12 @@ class MethodRequest(urllib2.Request):
             del kwargs['method']
         else:
             self._method = None
-        return urllib2.Request.__init__(self, *args, **kwargs)
+        return request.Request.__init__(self, *args, **kwargs)
 
     def get_method(self, *args, **kwargs):
         if self._method is not None:
             return self._method
-        return urllib2.Request.get_method(self, *args, **kwargs)
+        return request.Request.get_method(self, *args, **kwargs)
 
 
 def upload_file(filename, remove_local=False):
@@ -979,7 +1017,7 @@ def upload_file(filename, remove_local=False):
             'Content-length': filesize}
     with open(filename, 'r') as f:
         request = MethodRequest(url, f, headers, method='PUT')
-        response = urllib2.urlopen(request)
+        response = request.urlopen(request)
     upload_url = response.read()
     logging.info("Uploaded file is available at {}".format(upload_url))
 

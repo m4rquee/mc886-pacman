@@ -125,8 +125,4 @@ Remember to remove these lines when the tournament is over!
 > The AI team
 
 ## What should be done for next year?
-Python 2 is dead! Long live Python 3!
-
-Since 1 January 2020, the 2.7-series of Python has reached its [end of life](https://www.python.org/dev/peps/pep-0373/).  This means that there will be no more security updates for Python 2.7, and thus should not be used in a professional setting anymore.  That also means we should stop teaching Python 2, and only use Python 3 in projects.
-
-All code in this repository is written for Python 2.7.  This should be transformed into Python 3 before new iterations of this course.  We should check if the [original repo](https://bitbucket.org/ssardina-teaching/pacman-projects/) has been translated to Python 3, import their commits, check for changes in the functions from their repo we have used, and then translate [`competition.py`](competition.py).
+Always check if [the repository we forked from](https://github.com/AI4EDUC/pacman-contest-3) has new updates!
