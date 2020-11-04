@@ -912,11 +912,12 @@ def analyse_student_modules(student_modules):
                     team_red = createTeam(0, 1, True)
                     team_blue = createTeam(2, 3, False)
             except:
-                arg_spec = inspect.getargspec(createTeam)
-                nondefault_args = len(arg_spec.args) - len(arg_spec.defaults)
-                if len(arg_spec.args) < 3:
+                arg_spec = inspect.getfullargspec(createTeam)
+                all_args = len(arg_spec.args)
+                nondefault_args = all_args - len(arg_spec.defaults)
+                if all_args < 3:
                     error = StudentError.CreateTeamTooFewArgs
-                elif len(arg_spec.args) - len(arg_spec.defaults) > 3:
+                elif nondefault_args > 3:
                     error = StudentError.CreateTeamTooManyNondefaults
                 else:
                     error = StudentError.CreateTeamRuntime
