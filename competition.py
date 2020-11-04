@@ -734,6 +734,8 @@ competition scores, teams with more points collected will be ranked higher.
 </table>""".format(**fmt)
 
     log_contents = "".join(open(LOG_FILENAME, 'r').readlines())
+    # TODO: Track down where all NUL characters come from in the log
+    log_contents = log_contents.replace("\0", "")
     fmt['log'] = """<h2>Log file</h2>
     <pre>{}</pre>""".format(log_contents)
 
