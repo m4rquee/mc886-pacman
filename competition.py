@@ -19,6 +19,7 @@ import shutil
 import smtplib
 import sys
 import tempfile
+import time
 import urllib.request as request
 import zipfile
 from contextlib import contextmanager
@@ -236,7 +237,7 @@ def parse_arguments():
             action="store_true",
             help="Edit or create the secrets file. No competition is played.")
     parser.add_argument("-T", "--threads", dest="threads",
-            type=check_positive_or_zero, default=multiprocessing.cpu_count(),
+            type=check_positive_or_zero, default=multiprocessing.cpu_count()-1,
             help="""Number of threads used for running matches.""")
 
     # capture.py-specific arguments.
@@ -1079,7 +1080,7 @@ AI Capture the Flag Competition Bot"""))
     smtp.quit()
 
 
-def run_match(args, output_dir, match_queue, results):
+def run_match(runner_id, args, output_dir, match_queue, results, is_done):
     """
     Worker for multithreading, runs a single match at a time.
 
@@ -1087,7 +1088,7 @@ def run_match(args, output_dir, match_queue, results):
     for the matches in match_queue, a multiprocessing.Queue.  Results of
     capture.runGames are put into results, another multiprocessing.Queue.
     """
-    while True:
+    while not match_queue.empty():
         try:
             matchno = match_queue.qsize()
             (red_name, red_factory), (blue_name, blue_factory) = match_queue.get(timeout=1)
@@ -1131,32 +1132,37 @@ def run_match(args, output_dir, match_queue, results):
             # Play the game!
             _args = update_arguments(args, red_name, red_agents, blue_name, blue_agents)
             log_prefix = "{} ({} vs {}): ".format(matchno, red_name, blue_name)
-            with log_stdout(prefix=log_prefix):
-                with log_stderr(prefix=log_prefix):
-                    games = capture.runGames(**_args)
+            with tempfile.TemporaryDirectory(prefix="pacman-{}-{}-{}-".format(matchno, red_name, blue_name)) as tmpdirname:
+                curdir = os.path.abspath(os.curdir)
+                with log_stdout(prefix=log_prefix):
+                    with log_stderr(prefix=log_prefix):
+                        os.chdir(tmpdirname)
+                        games = capture.runGames(**_args)
+                        os.chdir(curdir)
 
-            # Update the global score card.
-            points = [(game.state.data.score, game.agentCrashed or game.agentTimeout)
-                    for game in games]
+                # Update the global score card.
+                points = [(game.state.data.score, game.agentCrashed or game.agentTimeout)
+                        for game in games]
 
-            for point, error in points:
-                red_result, blue_result = Result.from_points(point, error)
-                logging.info("{} vs {} ended in {}-{} with {} pts".format(
-                    red_name, blue_name,
-                    Result.get_name(red_result), Result.get_name(blue_result),
-                    0))
-                results.put((red_name, blue_name, point, red_result, blue_result))
+                for point, error in points:
+                    red_result, blue_result = Result.from_points(point, error)
+                    logging.info("{} vs {} ended in {}-{} with {} pts".format(
+                        red_name, blue_name,
+                        Result.get_name(red_result), Result.get_name(blue_result),
+                        0))
+                    results.put((red_name, blue_name, point, red_result, blue_result))
 
-            # Move all replay-% files to results/red_name-blue_name-%d
-            match_name = os.path.join(output_dir, "{}-{}".format(red_name, blue_name))
-            replay_prefix = 'replay'
-            replay_files = filter(lambda s: s.startswith(replay_prefix + '-'),
-                    os.listdir('.'))
-            for filename in replay_files:
-                new_name = match_name + filename[len(replay_prefix):]
-                os.rename(filename, new_name)
+                # Move all replay-% files to results/red_name-blue_name-%d
+                match_name = os.path.join(output_dir, "{}-{}".format(red_name, blue_name))
+                replay_prefix = 'replay'
+                replay_files = filter(lambda s: s.startswith(replay_prefix + '-'),
+                        os.listdir(tmpdirname))
+                for filename in replay_files:
+                    new_name = match_name + filename[len(replay_prefix):]
+                    shutil.move(os.path.join(tmpdirname, filename), os.path.join(curdir, new_name))
         except multiprocessing.queues.Empty:
             break
+    is_done.put(runner_id)
 
 def run_competition(args):
     """
@@ -1205,22 +1211,27 @@ def run_competition(args):
             pass
 
         matches = scoreboard.make_pairings()
-        match_runners = []
+        match_runners = {}
         results = multiprocessing.Queue()
+        is_done = multiprocessing.Queue()
         if not args.no_mail:
             logging.info("Emailing {} participants the results".format(len(email_addresses)))
         logging.info("A total of {} matches will be played. Counting down".format(matches.qsize()))
-        for _ in range(args.threads):
+        for i in range(args.threads):
             p = multiprocessing.Process(target=run_match,
-                    args=(args, output_dir, matches, results))
-            match_runners.append(p)
+                    args=(i, args, output_dir, matches, results, is_done))
+            match_runners[i] = p
             p.start()
 
-        for p in match_runners:
-            p.join()
-
-        while not results.empty():
-            scoreboard.add_result(*results.get())
+        while match_runners:
+            if not is_done.empty():
+                name = is_done.get(timeout=1)
+                match_runners[name].join()
+                del match_runners[name]
+            # Periodically move results to scoreboard, so that results is not overflowing.
+            while not results.empty():
+                scoreboard.add_result(*results.get())
+            time.sleep(0.1)
 
         args.timestamp_finish = datetime.datetime.now()
         report_file = os.path.join(output_dir, "report.html")
