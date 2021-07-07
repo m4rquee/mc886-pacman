@@ -1,0 +1,1 @@
+from evolutionary.gpdef.PacmanSyntaxTree import PacmanSyntaxTree
