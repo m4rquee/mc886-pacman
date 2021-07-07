@@ -17,7 +17,8 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
                    'DistToNextJunction': float, 'GhostBeforeJunction': bool,
                    'GdPillCount': float, 'GdPowerPillCount': float,
                    'GdEdibleGhostCount': float, 'GdNonEdibleGhostCount': float,
-                   'Score': float}
+                   'Score': float, 'DirectionX': float, 'DirectionY': float,
+                   'PosX': float, 'PosY': float, 'Action': float}
     FLOAT_CONSTS = [-1.0, 0.0, 0.1, 0.5, 1.0, 2.0, math.pi, 5.0, 10.0, math.inf]
 
     def __init__(self, name):
@@ -35,6 +36,8 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         self.addPrimitive(operator.or_, [bool, bool], bool)
         self.addPrimitive(operator.xor, [bool, bool], bool)
         self.addPrimitive(operator.not_, [bool], bool)
+        self.addPrimitive(math.isinf, [float], bool)
+        self.addPrimitive(math.isnan, [float], bool)
 
         # Mathematical operations:
         self.addPrimitive(operator.add, [float, float], float)
@@ -50,9 +53,21 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         self.addPrimitive(min, [float, float], float)
         self.addPrimitive(mean, [float, float], float)
         self.addPrimitive(relu, [float], float)
+        self.addPrimitive(math.cos, [float], float)
+        self.addPrimitive(math.sin, [float], float)
+        self.addPrimitive(math.ceil, [float], float)
+        self.addPrimitive(math.floor, [float], float)
 
         # Ternary primitives:
         self.addPrimitive(if_then_else, [bool, float, float], float)
+
+        # Comparison operations:
+        self.addPrimitive(operator.lt, [float, float], bool)
+        self.addPrimitive(operator.le, [float, float], bool)
+        self.addPrimitive(operator.eq, [float, float], bool)
+        self.addPrimitive(operator.ne, [float, float], bool)
+        self.addPrimitive(operator.ge, [float, float], bool)
+        self.addPrimitive(operator.gt, [float, float], bool)
 
         # Use more readable names:
         new_names = PacmanSyntaxTree.IN_TYPE_MAP.keys()
