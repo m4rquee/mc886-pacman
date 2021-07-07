@@ -12,7 +12,8 @@ class Population:
         # Transform the tree expression in a callable function
         func = self.toolbox.compile(expr=individual)
         agent = EvolutionaryAgent(func)
-        # tests the agent in the environment...
+        for _ in range(self.tries):
+            self.game_runner(pacman=agent)
         return 0,
 
     def evolve(self):
@@ -26,16 +27,18 @@ class Population:
                             halloffame=hof)
         return self.pop, stats, hof
 
-    def __init__(self, n):
+    def __init__(self, n, tries, game_runner):
         # Startup configurations:
+        self.tries = tries
+        self.game_runner = game_runner
         creator.create('FitnessMax', base.Fitness, weights=(1.0,))
         creator.create('Individual', gp.PrimitiveTree,
                        fitness=creator.FitnessMax)
 
         self.pset = PacmanSyntaxTree()
         self.toolbox = base.Toolbox()
-        self.toolbox.register('expr', gp.genHalfAndHalf, pset=self.pset, min_=1,
-                              max_=2)
+        self.toolbox.register('expr', gp.genHalfAndHalf, pset=self.pset, min_=2,
+                              max_=5)
         self.toolbox.register('individual', tools.initIterate,
                               creator.Individual, self.toolbox.expr)
         self.toolbox.register('population', tools.initRepeat, list,
