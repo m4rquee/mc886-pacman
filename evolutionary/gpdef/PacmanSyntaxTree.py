@@ -21,7 +21,7 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
                    'PosX': float, 'PosY': float, 'Action': float}
     FLOAT_CONSTS = [-1.0, 0.0, 0.1, 0.5, 1.0, 2.0, math.pi, 5.0, 10.0, math.inf]
 
-    def __init__(self, name):
+    def __init__(self, name='PacmanSyntaxTree'):
         in_types = PacmanSyntaxTree.IN_TYPE_MAP.values()
         super().__init__(name, in_types, float, prefix='')
 

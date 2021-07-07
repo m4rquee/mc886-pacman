@@ -26,7 +26,7 @@ class Population:
                             halloffame=hof)
         return self.pop, stats, hof
 
-    def __init__(self, n, seed=42):
+    def __init__(self, n):
         # Startup configurations:
         creator.create('FitnessMax', base.Fitness, weights=(1.0,))
         creator.create('Individual', gp.PrimitiveTree,
@@ -50,5 +50,4 @@ class Population:
                               expr=self.toolbox.expr_mut, pset=self.pset)
 
         # Generates the population:
-        random.seed(seed)
         self.pop = self.toolbox.population(n=n)

@@ -523,6 +523,9 @@ def readCommand( argv ):
                       help='Turns on exception handling and timeouts during games', default=False)
     parser.add_option('--timeout', dest='timeout', type='int',
                       help=default('Maximum length of time an agent can spend computing in a single game'), default=30)
+    parser.add_option('-s', '--population_size', type='int', dest='npop',
+                      help=default('The population size to evolve'),
+                      default=100)
 
     options, otherjunk = parser.parse_args(argv)
     if len(otherjunk) != 0:
@@ -582,6 +585,7 @@ def readCommand( argv ):
         replayGame(**recorded)
         sys.exit(0)
 
+    args['npop'] = options.npop  # saves the population size
     return args
 
 def loadAgent(pacman, nographics):
