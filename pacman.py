@@ -120,8 +120,8 @@ class GameState:
         # Book keeping
         state.data._agentMoved = agentIndex
         state.data.score += state.data.scoreChange
-        GameState.explored.add(self)
-        GameState.explored.add(state)
+        # GameState.explored.add(self)
+        # GameState.explored.add(state)
         return state
 
     def getLegalPacmanActions( self ):
@@ -629,7 +629,8 @@ def replayGame( layout, actions, display ):
 
     display.finish()
 
-def runGames( layout, pacman, ghosts, display, numGames, record, numTraining = 0, catchExceptions=False, timeout=30 ):
+def runGames(layout, pacman, ghosts, display, numGames, record, numTraining=0,
+             catchExceptions=False, timeout=30, **kwargs):
     import __main__
     __main__.__dict__['_display'] = display
 
