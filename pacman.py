@@ -642,6 +642,7 @@ def runGames(layout, pacman, ghosts, display, numGames, record, numTraining=0,
     rules = ClassicGameRules(timeout)
     games = []
 
+    scores, wins, move_count = [], [], []
     for i in range( numGames ):
         beQuiet = i < numTraining
         if beQuiet:
@@ -655,6 +656,9 @@ def runGames(layout, pacman, ghosts, display, numGames, record, numTraining=0,
         game = rules.newGame( layout, pacman, ghosts, gameDisplay, beQuiet, catchExceptions)
         game.run()
         if not beQuiet: games.append(game)
+        scores.append(game.state.getScore())
+        wins.append(game.state.isWin())
+        move_count.append(len(game.moveHistory))
 
         if record:
             import time, pickle
@@ -664,16 +668,17 @@ def runGames(layout, pacman, ghosts, display, numGames, record, numTraining=0,
             pickle.dump(components, f)
             f.close()
 
+    avg_score = sum(scores) / float(len(scores))
+    winRate = wins.count(True) / float(len(wins))
+    avg_move_count = sum(move_count) / float(len(move_count))
     if (numGames-numTraining) > 0:
-        scores = [game.state.getScore() for game in games]
-        wins = [game.state.isWin() for game in games]
-        winRate = wins.count(True)/ float(len(wins))
-        print('Average Score:', sum(scores) / float(len(scores)))
+        print('Average Score:', avg_score)
+        print('Average Move Count:', avg_move_count)
         print('Scores:       ', ', '.join([str(score) for score in scores]))
         print('Win Rate:      %d/%d (%.2f)' % (wins.count(True), len(wins), winRate))
         print('Record:       ', ', '.join([ ['Loss', 'Win'][int(w)] for w in wins]))
 
-    return games
+    return games, avg_score, winRate, avg_move_count
 
 if __name__ == '__main__':
     """
