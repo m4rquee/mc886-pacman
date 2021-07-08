@@ -42,8 +42,9 @@ class Population:
         mstats = tools.MultiStatistics(fitness=stats_fit, moves=stats_moves)
 
         for block in range(0, self.ngen, self.save_freq):
-            algorithms.eaSimple(self.pop, self.toolbox, 0.1, 0.1,
-                                self.save_freq, mstats, halloffame=self.hof)
+            algorithms.eaMuPlusLambda(self.pop, self.toolbox, self.n, 10, 0.8,
+                                      0.1, self.save_freq, stats=mstats,
+                                      halloffame=self.hof, verbose=True)
             self.gen_count += self.save_freq
             checkpoint_save(self.pop, self.gen_count, self.hof)
         return self.pop, mstats, self.hof
@@ -51,6 +52,7 @@ class Population:
     def __init__(self, n, ngen, tries, game_runner, save_freq=10,
                  checkpoint_file=None):
         # Startup configurations:
+        self.n = n
         self.ngen = ngen
         self.tries = tries
         self.game_runner = game_runner
