@@ -473,7 +473,7 @@ def parseAgentArgs(str):
         opts[key] = val
     return opts
 
-def readCommand( argv ):
+def readCommand(argv, load_pacman=True):
     """
     Processes the command used to run pacman from the command line.
     """
@@ -541,13 +541,15 @@ def readCommand( argv ):
 
     # Choose a Pacman agent
     noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
-    pacmanType = loadAgent(options.pacman, noKeyboard)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
         if 'numTraining' not in agentOpts: agentOpts['numTraining'] = options.numTraining
-    pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
-    args['pacman'] = pacman
+    args['pacman'] = None
+    if load_pacman:
+        pacmanType = loadAgent(options.pacman, noKeyboard)
+        pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
+        args['pacman'] = pacman
 
     # Don't display training games
     if 'numTrain' in agentOpts:
