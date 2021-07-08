@@ -14,11 +14,13 @@ if __name__ == '__main__':
 
     > python evolutionary_train.py --help
     """
-    args = readCommand(sys.argv[1:])  # Get game components based on input
+    args = readCommand(sys.argv[1:], False)  # Get game components based on input
 
     runner = partial(runGames, **args)
     population = Population(args['npop'], args['numGames'], runner)
-    population.evolve()
+    pop, stats, hof = population.evolve()
+    input('Press enter to see best individual running...')
+    population.eval_individual(hof[0], True)
 
     # import cProfile
     # cProfile.run("runGames( **args )")
