@@ -21,7 +21,8 @@ if __name__ == '__main__':
     pop, stats, hof = population.evolve()
     input('Press enter to see best individuals running...')
     for i, individual in enumerate(hof):
-        print('Running %d individual:' % i, individual)
+        print('\nRunning %d individual:' % i, individual)
+        population.tries = 2
         population.eval_individual(individual, True)
         input('Press enter to see next')
 
