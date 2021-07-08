@@ -4,10 +4,11 @@ import operator
 from deap.gp import PrimitiveSetTyped
 
 
-def safe_div(a, b): return math.inf if b == 0 else a / b
-def safe_floordiv(a, b): return math.inf if b == 0 else a // b
-def mean(a, b): (a + b) / 2
-def relu(x): max(0, x)
+def safe_div(a, b): return 0 if b == 0 else (a / b)
+def safe_floordiv(a, b): return 0 if b == 0 else (a // b)
+def safe_mod(a, b): return 0 if b == 0 else (a % b)
+def mean(a, b): return (a + b) / 2.0
+def relu(x): return max(0, x)
 def if_then_else(cond, a, b): return a if cond else b
 
 
@@ -18,8 +19,9 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
                    'GdPillCount': float, 'GdPowerPillCount': float,
                    'GdEdibleGhostCount': float, 'GdNonEdibleGhostCount': float,
                    'Score': float, 'DirectionX': float, 'DirectionY': float,
-                   'PosX': float, 'PosY': float, 'Action': float}
-    FLOAT_CONSTS = [-1.0, 0.0, 0.1, 0.5, 1.0, 2.0, math.pi, 5.0, 10.0, math.inf]
+                   'PosX': float, 'PosY': float,
+                   'ActionX': float, 'ActionY': float}
+    FLOAT_CONSTS = [-1.0, 0.0, 0.1, 0.5, 1.0, 2.0, math.pi, 5.0, 10.0]
 
     def __init__(self, name='PacmanSyntaxTree'):
         in_types = PacmanSyntaxTree.IN_TYPE_MAP.values()
@@ -36,16 +38,13 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         self.addPrimitive(operator.or_, [bool, bool], bool)
         self.addPrimitive(operator.xor, [bool, bool], bool)
         self.addPrimitive(operator.not_, [bool], bool)
-        self.addPrimitive(math.isinf, [float], bool)
-        self.addPrimitive(math.isnan, [float], bool)
 
         # Mathematical operations:
         self.addPrimitive(operator.add, [float, float], float)
         self.addPrimitive(operator.sub, [float, float], float)
         self.addPrimitive(operator.mul, [float, float], float)
         self.addPrimitive(safe_div, [float, float], float)
-        self.addPrimitive(operator.pow, [float, float], float)
-        self.addPrimitive(operator.mod, [float, float], float)
+        self.addPrimitive(safe_mod, [float, float], float)
         self.addPrimitive(safe_floordiv, [float, float], float)
         self.addPrimitive(operator.abs, [float], float)
         self.addPrimitive(operator.neg, [float], float)
