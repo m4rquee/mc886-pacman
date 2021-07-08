@@ -19,10 +19,11 @@ if __name__ == '__main__':
     runner = partial(runGames, **args)
     population = Population(args['npop'], args['ngen'], args['numGames'], runner)
     pop, stats, hof = population.evolve()
-    input('Press enter to see best individuals running...')
+
+    input_str = input('Press enter to see best individuals running... ')
+    population.tries = int(input_str or 1)
     for i, individual in enumerate(hof):
         print('\nRunning %d individual:' % i, individual)
-        population.tries = 2
         population.eval_individual(individual, True)
         input('Press enter to see next')
 
