@@ -1,5 +1,3 @@
-import random
-
 import numpy as np
 from deap import creator, base, gp, tools, algorithms
 
@@ -8,13 +6,17 @@ from evolutionary.gpdef import PacmanSyntaxTree
 
 
 class Population:
-    def eval_individual(self, individual):
+    WIN_WEIGHT = 1000
+
+    def eval_individual(self, individual, show_gui=False):
         # Transform the tree expression in a callable function
+        # print(individual)
         func = self.toolbox.compile(expr=individual)
         agent = EvolutionaryAgent(func)
-        for _ in range(self.tries):
-            self.game_runner(pacman=agent)
-        return 0,
+        numTraining = 0 if show_gui else self.tries
+        _, avg_score, win_rate = \
+            self.game_runner(pacman=agent, numTraining=numTraining)
+        return avg_score + Population.WIN_WEIGHT * win_rate,
 
     def evolve(self):
         hof = tools.HallOfFame(1)
@@ -23,7 +25,7 @@ class Population:
         stats.register("std", np.std)
         stats.register("min", np.min)
         stats.register("max", np.max)
-        algorithms.eaSimple(self.pop, self.toolbox, 0.5, 0.2, 40, stats,
+        algorithms.eaSimple(self.pop, self.toolbox, 0.1, 0.1, 100, stats,
                             halloffame=hof)
         return self.pop, stats, hof
 
@@ -46,7 +48,7 @@ class Population:
         self.toolbox.register('compile', gp.compile, pset=self.pset)
 
         self.toolbox.register("evaluate", self.eval_individual)
-        self.toolbox.register("select", tools.selTournament, tournsize=3)
+        self.toolbox.register("select", tools.selTournament, tournsize=10)
         self.toolbox.register("mate", gp.cxOnePoint)
         self.toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
         self.toolbox.register("mutate", gp.mutUniform,
