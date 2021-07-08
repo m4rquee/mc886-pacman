@@ -17,7 +17,9 @@ if __name__ == '__main__':
     args = readCommand(sys.argv[1:], False)  # Get game components based on input
 
     runner = partial(runGames, **args)
-    population = Population(args['npop'], args['ngen'], args['numGames'], runner)
+    checkpoint_file = args['checkpoint_file']
+    population = Population(args['npop'], args['ngen'], args['numGames'],
+                            runner, checkpoint_file=checkpoint_file)
     pop, stats, hof = population.evolve()
 
     input_str = input('Press enter to see best individuals running... ')

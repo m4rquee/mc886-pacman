@@ -528,6 +528,9 @@ def readCommand(argv, load_pacman=True):
                       default=100)
     parser.add_option('-e', '--num_generations', type='int', dest='ngen',
                       help=default('The number of generations'), default=10)
+    parser.add_option('--checkpoint_file', dest='checkpoint_file', type='str',
+                      help='Resumes from last evolution checkpoint',
+                      default=None)
 
     options, otherjunk = parser.parse_args(argv)
     if len(otherjunk) != 0:
@@ -591,6 +594,7 @@ def readCommand(argv, load_pacman=True):
 
     args['npop'] = options.npop  # saves the population size
     args['ngen'] = options.ngen  # saves the number of generations
+    args['checkpoint_file'] = options.checkpoint_file  # saves the file name
     return args
 
 def loadAgent(pacman, nographics):
