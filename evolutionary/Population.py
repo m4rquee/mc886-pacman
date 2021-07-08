@@ -19,18 +19,19 @@ class Population:
         return avg_score + Population.WIN_WEIGHT * win_rate,
 
     def evolve(self):
-        hof = tools.HallOfFame(1)
+        hof = tools.HallOfFame(3)
         stats = tools.Statistics(lambda ind: ind.fitness.values)
         stats.register("avg", np.mean)
         stats.register("std", np.std)
         stats.register("min", np.min)
         stats.register("max", np.max)
-        algorithms.eaSimple(self.pop, self.toolbox, 0.1, 0.1, 100, stats,
+        algorithms.eaSimple(self.pop, self.toolbox, 0.1, 0.1, self.ngen, stats,
                             halloffame=hof)
         return self.pop, stats, hof
 
-    def __init__(self, n, tries, game_runner):
+    def __init__(self, n, ngen, tries, game_runner):
         # Startup configurations:
+        self.ngen = ngen
         self.tries = tries
         self.game_runner = game_runner
         creator.create('FitnessMax', base.Fitness, weights=(1.0,))

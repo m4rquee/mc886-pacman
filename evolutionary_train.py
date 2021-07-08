@@ -17,10 +17,13 @@ if __name__ == '__main__':
     args = readCommand(sys.argv[1:], False)  # Get game components based on input
 
     runner = partial(runGames, **args)
-    population = Population(args['npop'], args['numGames'], runner)
+    population = Population(args['npop'], args['ngen'], args['numGames'], runner)
     pop, stats, hof = population.evolve()
-    input('Press enter to see best individual running...')
-    population.eval_individual(hof[0], True)
+    input('Press enter to see best individuals running...')
+    for i, individual in enumerate(hof):
+        print('Running %d individual:' % i, individual)
+        population.eval_individual(individual, True)
+        input('Press enter to see next')
 
     # import cProfile
     # cProfile.run("runGames( **args )")

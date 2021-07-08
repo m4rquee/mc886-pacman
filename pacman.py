@@ -526,6 +526,8 @@ def readCommand(argv, load_pacman=True):
     parser.add_option('-s', '--population_size', type='int', dest='npop',
                       help=default('The population size to evolve'),
                       default=100)
+    parser.add_option('-e', '--num_generations', type='int', dest='ngen',
+                      help=default('The number of generations'), default=10)
 
     options, otherjunk = parser.parse_args(argv)
     if len(otherjunk) != 0:
@@ -588,6 +590,7 @@ def readCommand(argv, load_pacman=True):
         sys.exit(0)
 
     args['npop'] = options.npop  # saves the population size
+    args['ngen'] = options.ngen  # saves the number of generations
     return args
 
 def loadAgent(pacman, nographics):
