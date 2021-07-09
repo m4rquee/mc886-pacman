@@ -1,5 +1,6 @@
 import pickle
 from datetime import datetime
+from random import random
 from time import time
 
 import numpy as np
@@ -17,7 +18,7 @@ def checkpoint_save(pop, gen_count, hof):
 
 class Population:
     WIN_WEIGHT = 10000
-    MOVE_WEIGHT = 0.1
+    MOVE_WEIGHT = 0.5
 
     def eval_individual(self, individual, show_gui=False):
         # Transform the tree expression in a callable function
@@ -30,8 +31,22 @@ class Population:
         fitness = avg_score + Population.WIN_WEIGHT * win_rate
         return fitness, avg_move_count
 
+    def random_mutation_operator(self, individual):
+        """
+        Randomly picks a replacement, insert, or shrink mutation.
+        """
+        roll = random()
+        if roll <= 0.10:  # 10%
+            return gp.mutUniform(individual, expr=self.toolbox.expr_mut, pset=self.pset)
+        elif roll <= 0.40:  # 30%
+            return gp.mutNodeReplacement(individual, pset=self.pset)
+        elif roll <= 0.90:  # 50%
+            return gp.mutInsert(individual, pset=self.pset)
+        return gp.mutShrink(individual)  # 10%
+
     def evolve(self):
         self.hof = self.hof or tools.HallOfFame(3)
+        if self.ngen == 0: return self.pop, None, self.hof
         stats_fit = tools.Statistics(lambda ind: ind.fitness.values[0])
         stats_fit.register('fit avg', np.mean)
         stats_fit.register('std', np.std)
@@ -42,23 +57,25 @@ class Population:
         mstats = tools.MultiStatistics(fitness=stats_fit, moves=stats_moves)
 
         for block in range(0, self.ngen, self.save_freq):
-            algorithms.eaMuPlusLambda(self.pop, self.toolbox, self.n, 10, 0.8,
-                                      0.1, self.save_freq, stats=mstats,
+            algorithms.eaMuPlusLambda(self.pop, self.toolbox, self.n,
+                                      self.lambda_, 0.5, 0.4,
+                                      ngen=self.save_freq, stats=mstats,
                                       halloffame=self.hof, verbose=True)
             self.gen_count += self.save_freq
             checkpoint_save(self.pop, self.gen_count, self.hof)
         return self.pop, mstats, self.hof
 
-    def __init__(self, n, ngen, tries, game_runner, save_freq=10,
+    def __init__(self, n, ngen, tries, game_runner, save_freq=25,
                  checkpoint_file=None):
         # Startup configurations:
         self.n = n
+        self.lambda_ = int(self.n * 0.2)
         self.ngen = ngen
         self.tries = tries
         self.game_runner = game_runner
         self.save_freq = min(ngen, save_freq)
         creator.create('FitnessMax', base.Fitness,
-                       weights=(1.0, Population.MOVE_WEIGHT))
+                       weights=(1.0, -Population.MOVE_WEIGHT))
         creator.create('Individual', gp.PrimitiveTree,
                        fitness=creator.FitnessMax)
 
@@ -73,11 +90,11 @@ class Population:
         self.toolbox.register('compile', gp.compile, pset=self.pset)
 
         self.toolbox.register('evaluate', self.eval_individual)
-        self.toolbox.register('select', tools.selTournament, tournsize=10)
+        tournsize = int(self.n * 0.9)
+        self.toolbox.register('select', tools.selTournament, tournsize=tournsize)
         self.toolbox.register('mate', gp.cxOnePoint)
-        self.toolbox.register('expr_mut', gp.genFull, min_=0, max_=2)
-        self.toolbox.register('mutate', gp.mutUniform,
-                              expr=self.toolbox.expr_mut, pset=self.pset)
+        self.toolbox.register('expr_mut', gp.genHalfAndHalf, min_=0, max_=3)
+        self.toolbox.register('mutate', self.random_mutation_operator)
 
         self.gen_count = 0
         self.hof = None

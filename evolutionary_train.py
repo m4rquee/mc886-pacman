@@ -22,12 +22,12 @@ if __name__ == '__main__':
                             runner, checkpoint_file=checkpoint_file)
     pop, stats, hof = population.evolve()
 
-    input_str = input('Press enter to see best individuals running... ')
+    input_str = input('Press enter to see the best individual(s) running (you may type the number of tries)... ')
     population.tries = int(input_str or 1)
     for i, individual in enumerate(hof):
+        input('Press enter to see next')
         print('\nRunning %d individual:' % i, individual)
         population.eval_individual(individual, True)
-        input('Press enter to see next')
 
     # import cProfile
     # cProfile.run("runGames( **args )")
