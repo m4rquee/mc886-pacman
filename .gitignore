@@ -139,3 +139,6 @@ log.txt
 students/*
 !students/__init__.py
 results/*
+
+# Trained agents
+*.pkl

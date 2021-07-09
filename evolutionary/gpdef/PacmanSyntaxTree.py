@@ -10,11 +10,13 @@ def safe_mod(a, b): return 0 if b == 0 else (a % b)
 def mean(a, b): return (a + b) / 2.0
 def relu(x): return max(0, x)
 def if_then_else(cond, a, b): return a if cond else b
+def dist(a, b, c, d): return abs(a - c) + abs(b - d)
 
 
 class PacmanSyntaxTree(PrimitiveSetTyped):
     IN_TYPE_MAP = {'DistToNextPill': float, 'DistToNextPowerPill': float,
-                   'DistToEdibleGhost': float, 'DistToNonEdibleGhost': float,
+                   'EdibleGhostX': float, 'EdibleGhostY': float,
+                   'NonEdibleGhostX': float, 'NonEdibleGhostY': float,
                    'DistToNextJunction': float, 'GhostBeforeJunction': bool,
                    'GdPillCount': float, 'GdPowerPillCount': float,
                    'GdEdibleGhostCount': float, 'GdNonEdibleGhostCount': float,
@@ -44,29 +46,32 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         self.addPrimitive(operator.sub, [float, float], float)
         self.addPrimitive(operator.mul, [float, float], float)
         self.addPrimitive(safe_div, [float, float], float)
-        self.addPrimitive(safe_mod, [float, float], float)
-        self.addPrimitive(safe_floordiv, [float, float], float)
+        # self.addPrimitive(safe_mod, [float, float], float)
+        # self.addPrimitive(safe_floordiv, [float, float], float)
         self.addPrimitive(operator.abs, [float], float)
         self.addPrimitive(operator.neg, [float], float)
         self.addPrimitive(max, [float, float], float)
         self.addPrimitive(min, [float, float], float)
         self.addPrimitive(mean, [float, float], float)
         self.addPrimitive(relu, [float], float)
-        self.addPrimitive(math.cos, [float], float)
-        self.addPrimitive(math.sin, [float], float)
-        self.addPrimitive(math.ceil, [float], float)
+        # self.addPrimitive(math.cos, [float], float)
+        # self.addPrimitive(math.sin, [float], float)
+        # self.addPrimitive(math.ceil, [float], float)
         self.addPrimitive(math.floor, [float], float)
 
         # Ternary primitives:
         self.addPrimitive(if_then_else, [bool, float, float], float)
 
+        # Distance primitive:
+        self.addPrimitive(dist, [float, float, float, float], float)
+
         # Comparison operations:
         self.addPrimitive(operator.lt, [float, float], bool)
-        self.addPrimitive(operator.le, [float, float], bool)
+        # self.addPrimitive(operator.le, [float, float], bool)
         self.addPrimitive(operator.eq, [float, float], bool)
         self.addPrimitive(operator.ne, [float, float], bool)
-        self.addPrimitive(operator.ge, [float, float], bool)
-        self.addPrimitive(operator.gt, [float, float], bool)
+        # self.addPrimitive(operator.ge, [float, float], bool)
+        # self.addPrimitive(operator.gt, [float, float], bool)
 
         # Use more readable names:
         new_names = PacmanSyntaxTree.IN_TYPE_MAP.keys()

@@ -2,6 +2,8 @@ import math
 from functools import partial
 from random import choice
 
+import numpy as np
+
 from game import Agent, Actions, Directions
 from util import nearestPoint, manhattanDistance
 
@@ -30,9 +32,12 @@ def dist_to_ghost(state, pos):
         ghost_pos = ghost.getPosition()
         (edible if ghost.scaredTimer > 0 else non_edible).append(ghost_pos)
     agent_dist = partial(manhattanDistance, pos)
-    min_ed = min(map(agent_dist, edible)) if len(edible) > 0 else -1
-    min_ned = min(map(agent_dist, non_edible)) if len(non_edible) > 0 else -1
-    return min_ed, len(edible), min_ned, len(non_edible)
+    eGhostX, eGhostY, neGhostX, neGhostY = -1, -1, -1, -1
+    if len(edible) > 0:
+        eGhostX, eGhostY = edible[np.argmin(map(agent_dist, edible))]
+    if len(non_edible) > 0:
+        neGhostX, neGhostY = non_edible[np.argmin(map(agent_dist, non_edible))]
+    return eGhostX, eGhostY, len(edible), neGhostX, neGhostY, len(non_edible)
 
 
 def next_junction(state, pos, current_dir):
@@ -62,9 +67,9 @@ class EvolutionaryAgent(Agent):
         current_dir = Actions.directionToVector(state.getPacmanState().configuration.direction, 1)
         DistToNextPill = dist_to_next_pill(state, nearest, current_dir)
         DistToNextPowerPill = dist_to_next_power_pill(state, nearest)
-        DistToEdibleGhost, GdEdibleGhostCount, \
-        DistToNonEdibleGhost, GdNonEdibleGhostCount \
-            = dist_to_ghost(state, nearest)
+        EdibleGhostX, EdibleGhostY, GdEdibleGhostCount, \
+        NonEdibleGhostX, NonEdibleGhostY, GdNonEdibleGhostCount = \
+            dist_to_ghost(state, nearest)
         DistToNextJunction, GhostBeforeJunction = \
             next_junction(state, nearest, current_dir)
         GdPillCount = state.getNumFood()
@@ -75,8 +80,10 @@ class EvolutionaryAgent(Agent):
         # Condensate all gathered information:
         condensed_state = {'DistToNextPill': DistToNextPill,
                            'DistToNextPowerPill': DistToNextPowerPill,
-                           'DistToEdibleGhost': DistToEdibleGhost,
-                           'DistToNonEdibleGhost': DistToNonEdibleGhost,
+                           'EdibleGhostX': EdibleGhostX,
+                           'EdibleGhostY': EdibleGhostY,
+                           'NonEdibleGhostX': NonEdibleGhostX,
+                           'NonEdibleGhostY': NonEdibleGhostY,
                            'DistToNextJunction': DistToNextJunction,
                            'GhostBeforeJunction': GhostBeforeJunction,
                            'GdPillCount': GdPillCount,
