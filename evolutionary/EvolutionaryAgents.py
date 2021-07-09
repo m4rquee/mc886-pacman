@@ -8,24 +8,26 @@ from game import Agent, Actions, Directions
 from util import nearestPoint, manhattanDistance
 
 
-def dist_to_next_pill(state, pos, current_dir):
-    x, y = pos
-    dx, dy = current_dir
-    if dx == 0 and dy == 0: return -1  # the agents is idle
-    k = 1  # k steps into the future
-    while not state.hasWall(x + k * dx, y + k * dy):
-        if state.hasFood(x + dx, y + dy): return k * (abs(dx) + abs(dy))
-        k += 1
-    return -1  # no pill in this direction
+def next_pill(state, pos):
+    agent_dist = partial(manhattanDistance, pos)
+    if state.getNumFood() == 0: return -1, -1  # no pill left
+    min_dist, pill_pos = math.inf, pos
+    for i, l in enumerate(state.getFood()):
+        for j, f in enumerate(l):
+            if f and (aux := agent_dist((i, j))) < min_dist:
+                min_dist = aux
+                pill_pos = (i, j)
+    return pill_pos
 
 
-def dist_to_next_power_pill(state, pos):
+def next_power_pill(state, pos):
     capsules = state.getCapsules()
     agent_dist = partial(manhattanDistance, pos)
-    return min(map(agent_dist, capsules)) if len(capsules) > 0 else -1
+    dists = map(agent_dist, capsules)
+    return capsules[np.argmin(dists)] if len(capsules) > 0 else (-1, -1)
 
 
-def dist_to_ghost(state, pos):
+def closest_ghosts(state, pos):
     # Dump positons are added to call min with nonempty lists:
     edible, non_edible = [], []
     for ghost in state.getGhostStates():
@@ -40,17 +42,17 @@ def dist_to_ghost(state, pos):
     return eGhostX, eGhostY, len(edible), neGhostX, neGhostY, len(non_edible)
 
 
-def next_junction(state, pos, current_dir):
+def next_wall(state, pos, current_dir):
     x, y = pos
     dx, dy = current_dir
     k = 1  # k steps into the future
     if dx == 0 and dy == 0: return -1, False  # the agents is idle
-    ghost_before_junction = False
+    ghost_before_wall = False
     ghosts = [nearestPoint(pos) for pos in state.getGhostPositions()]
     while not state.hasWall(x + k * dx, y + k * dy):
-        if (x + k * dx, y + k * dy) in ghosts: ghost_before_junction = True
+        if (x + k * dx, y + k * dy) in ghosts: ghost_before_wall = True
         k += 1
-    return k * (abs(dx) + abs(dy)), ghost_before_junction
+    return k, ghost_before_wall
 
 
 class EvolutionaryAgent(Agent):
@@ -65,21 +67,22 @@ class EvolutionaryAgent(Agent):
         nearest = nearestPoint(pos)
         # Integer direction vector:
         current_dir = Actions.directionToVector(state.getPacmanState().configuration.direction, 1)
-        DistToNextPill = dist_to_next_pill(state, nearest, current_dir)
-        DistToNextPowerPill = dist_to_next_power_pill(state, nearest)
+        NextPillX, NextPillY = next_pill(state, nearest)
+        NextPowerPillX, NextPowerPillY = next_power_pill(state, nearest)
         EdibleGhostX, EdibleGhostY, GdEdibleGhostCount, \
         NonEdibleGhostX, NonEdibleGhostY, GdNonEdibleGhostCount = \
-            dist_to_ghost(state, nearest)
+            closest_ghosts(state, nearest)
         DistToNextJunction, GhostBeforeJunction = \
-            next_junction(state, nearest, current_dir)
+            next_wall(state, nearest, current_dir)
         GdPillCount = state.getNumFood()
         GdPowerPillCount = len(state.getCapsules())
         Score = state.getScore()
         DirectionX, DirectionY = current_dir
 
         # Condensate all gathered information:
-        condensed_state = {'DistToNextPill': DistToNextPill,
-                           'DistToNextPowerPill': DistToNextPowerPill,
+        condensed_state = {'NextPillX': NextPillX, 'NextPillY': NextPillY,
+                           'NextPowerPillX': NextPowerPillX,
+                           'NextPowerPillY': NextPowerPillY,
                            'EdibleGhostX': EdibleGhostX,
                            'EdibleGhostY': EdibleGhostY,
                            'NonEdibleGhostX': NonEdibleGhostX,

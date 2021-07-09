@@ -14,7 +14,8 @@ def dist(a, b, c, d): return abs(a - c) + abs(b - d)
 
 
 class PacmanSyntaxTree(PrimitiveSetTyped):
-    IN_TYPE_MAP = {'DistToNextPill': float, 'DistToNextPowerPill': float,
+    IN_TYPE_MAP = {'NextPillX': float, 'NextPillY': float,
+                   'NextPowerPillX': float, 'NextPowerPillY': float,
                    'EdibleGhostX': float, 'EdibleGhostY': float,
                    'NonEdibleGhostX': float, 'NonEdibleGhostY': float,
                    'DistToNextJunction': float, 'GhostBeforeJunction': bool,
