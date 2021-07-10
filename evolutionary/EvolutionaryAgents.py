@@ -35,11 +35,17 @@ def closest_ghosts(state, pos):
         (edible if ghost.scaredTimer > 0 else non_edible).append(ghost_pos)
     agent_dist = partial(manhattanDistance, pos)
     eGhostX, eGhostY, neGhostX, neGhostY = -1, -1, -1, -1
+    eGhostDist, neGhostDist = -1, -1
     if len(edible) > 0:
-        eGhostX, eGhostY = edible[np.argmin(map(agent_dist, edible))]
+        dists = list(map(agent_dist, edible))
+        eGhostX, eGhostY = edible[np.argmin(dists)]
+        eGhostDist = min(dists)
     if len(non_edible) > 0:
-        neGhostX, neGhostY = non_edible[np.argmin(map(agent_dist, non_edible))]
-    return eGhostX, eGhostY, len(edible), neGhostX, neGhostY, len(non_edible)
+        dists = list(map(agent_dist, non_edible))
+        neGhostX, neGhostY = non_edible[np.argmin(dists)]
+        neGhostDist = min(dists)
+    return eGhostX, eGhostY, eGhostDist, len(edible), \
+           neGhostX, neGhostY, neGhostDist, len(non_edible)
 
 
 def next_wall(state, pos, current_dir):
@@ -69,8 +75,8 @@ class EvolutionaryAgent(Agent):
         current_dir = Actions.directionToVector(state.getPacmanState().configuration.direction, 1)
         NextPillX, NextPillY = next_pill(state, nearest)
         NextPowerPillX, NextPowerPillY = next_power_pill(state, nearest)
-        EdibleGhostX, EdibleGhostY, GdEdibleGhostCount, \
-        NonEdibleGhostX, NonEdibleGhostY, GdNonEdibleGhostCount = \
+        EdibleGhostX, EdibleGhostY, EdibleGhostDist, GdEdibleGhostCount, \
+        NonEdibleGhostX, NonEdibleGhostY, NonEdibleGhostDist, GdNonEdibleGhostCount = \
             closest_ghosts(state, nearest)
         DistToNextJunction, GhostBeforeJunction = \
             next_wall(state, nearest, current_dir)
@@ -85,8 +91,10 @@ class EvolutionaryAgent(Agent):
                            'NextPowerPillY': NextPowerPillY,
                            'EdibleGhostX': EdibleGhostX,
                            'EdibleGhostY': EdibleGhostY,
+                           'EdibleGhostDist': EdibleGhostDist,
                            'NonEdibleGhostX': NonEdibleGhostX,
                            'NonEdibleGhostY': NonEdibleGhostY,
+                           'NonEdibleGhostDist': NonEdibleGhostDist,
                            'DistToNextJunction': DistToNextJunction,
                            'GhostBeforeJunction': GhostBeforeJunction,
                            'GdPillCount': GdPillCount,

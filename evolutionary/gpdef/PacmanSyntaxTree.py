@@ -1,5 +1,6 @@
 import math
 import operator
+from random import gauss
 
 from deap.gp import PrimitiveSetTyped
 
@@ -11,6 +12,7 @@ def mean(a, b): return (a + b) / 2.0
 def relu(x): return max(0, x)
 def if_then_else(cond, a, b): return a if cond else b
 def dist(a, b, c, d): return abs(a - c) + abs(b - d)
+def esc_dist(a, b): return abs(a - b)
 
 
 class PacmanSyntaxTree(PrimitiveSetTyped):
@@ -18,13 +20,16 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
                    'NextPowerPillX': float, 'NextPowerPillY': float,
                    'EdibleGhostX': float, 'EdibleGhostY': float,
                    'NonEdibleGhostX': float, 'NonEdibleGhostY': float,
+                   'EdibleGhostDist': float, 'NonEdibleGhostDist': float,
                    'DistToNextJunction': float, 'GhostBeforeJunction': bool,
                    'GdPillCount': float, 'GdPowerPillCount': float,
                    'GdEdibleGhostCount': float, 'GdNonEdibleGhostCount': float,
                    'Score': float, 'DirectionX': float, 'DirectionY': float,
                    'PosX': float, 'PosY': float,
                    'ActionX': float, 'ActionY': float}
-    FLOAT_CONSTS = [-1.0, 0.0, 0.1, 0.5, 1.0, 2.0, math.pi, 5.0, 10.0]
+    FLOAT_CONSTS = [
+        -2.0, -1.0, 0.0, 0.1, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 100.0, 1000.0
+    ]
 
     def __init__(self, name='PacmanSyntaxTree'):
         in_types = PacmanSyntaxTree.IN_TYPE_MAP.values()
@@ -33,8 +38,7 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         # Terminals:
         for float_const in PacmanSyntaxTree.FLOAT_CONSTS:
             self.addTerminal(float_const, float)
-        self.addTerminal(True, bool)
-        self.addTerminal(False, bool)
+        self.addEphemeralConstant('Gauss', lambda: 100 * gauss(0, 1), float)
 
         # Bool operations:
         self.addPrimitive(operator.and_, [bool, bool], bool)
@@ -55,15 +59,16 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         self.addPrimitive(min, [float, float], float)
         self.addPrimitive(mean, [float, float], float)
         self.addPrimitive(relu, [float], float)
-        # self.addPrimitive(math.cos, [float], float)
-        # self.addPrimitive(math.sin, [float], float)
+        self.addPrimitive(math.cos, [float], float)
+        self.addPrimitive(math.sin, [float], float)
         # self.addPrimitive(math.ceil, [float], float)
         self.addPrimitive(math.floor, [float], float)
 
         # Ternary primitives:
         self.addPrimitive(if_then_else, [bool, float, float], float)
 
-        # Distance primitive:
+        # Distance primitives:
+        self.addPrimitive(esc_dist, [float, float], float)
         self.addPrimitive(dist, [float, float, float, float], float)
 
         # Comparison operations:
