@@ -29,6 +29,7 @@ class Population:
         _, avg_score, win_rate, avg_move_count = \
             self.game_runner(pacman=agent, numTraining=numTraining)
         fitness = avg_score + Population.WIN_WEIGHT * win_rate
+        if win_rate == 0: fitness -= Population.WIN_WEIGHT  # failure penalty
         return fitness, avg_move_count
 
     def random_mutation_operator(self, individual):
@@ -36,13 +37,13 @@ class Population:
         Randomly picks a replacement, insert, or shrink mutation.
         """
         roll = random()
-        if roll <= 0.10:  # 10%
+        if roll <= 0.30:  # 30%
             return gp.mutUniform(individual, expr=self.toolbox.expr_mut, pset=self.pset)
-        elif roll <= 0.40:  # 30%
+        elif roll <= 0.50:  # 20%
             return gp.mutNodeReplacement(individual, pset=self.pset)
-        elif roll <= 0.90:  # 50%
+        elif roll <= 0.70:  # 20%
             return gp.mutInsert(individual, pset=self.pset)
-        return gp.mutShrink(individual)  # 10%
+        return gp.mutShrink(individual)  # 30%
 
     def evolve(self):
         self.hof = self.hof or tools.HallOfFame(3)
@@ -57,10 +58,10 @@ class Population:
         mstats = tools.MultiStatistics(fitness=stats_fit, moves=stats_moves)
 
         for block in range(0, self.ngen, self.save_freq):
-            algorithms.eaMuPlusLambda(self.pop, self.toolbox, self.n,
-                                      self.lambda_, 0.5, 0.4,
-                                      ngen=self.save_freq, stats=mstats,
-                                      halloffame=self.hof, verbose=True)
+            algorithms.eaMuCommaLambda(self.pop, self.toolbox, self.n,
+                                       self.lambda_, 0.5, 0.4,
+                                       ngen=self.save_freq, stats=mstats,
+                                       halloffame=self.hof, verbose=True)
             self.gen_count += self.save_freq
             checkpoint_save(self.pop, self.gen_count, self.hof)
         return self.pop, mstats, self.hof
@@ -69,7 +70,7 @@ class Population:
                  checkpoint_file=None):
         # Startup configurations:
         self.n = n
-        self.lambda_ = int(self.n * 0.2)
+        self.lambda_ = int(self.n * 1.5)
         self.ngen = ngen
         self.tries = tries
         self.game_runner = game_runner
@@ -82,7 +83,7 @@ class Population:
         self.pset = PacmanSyntaxTree()
         self.toolbox = base.Toolbox()
         self.toolbox.register('expr', gp.genHalfAndHalf, pset=self.pset, min_=2,
-                              max_=5)
+                              max_=8)
         self.toolbox.register('individual', tools.initIterate,
                               creator.Individual, self.toolbox.expr)
         self.toolbox.register('population', tools.initRepeat, list,
@@ -90,10 +91,10 @@ class Population:
         self.toolbox.register('compile', gp.compile, pset=self.pset)
 
         self.toolbox.register('evaluate', self.eval_individual)
-        tournsize = int(self.n * 0.9)
+        tournsize = int(self.n * 0.1)
         self.toolbox.register('select', tools.selTournament, tournsize=tournsize)
         self.toolbox.register('mate', gp.cxOnePoint)
-        self.toolbox.register('expr_mut', gp.genHalfAndHalf, min_=0, max_=3)
+        self.toolbox.register('expr_mut', gp.genHalfAndHalf, min_=1, max_=5)
         self.toolbox.register('mutate', self.random_mutation_operator)
 
         self.gen_count = 0
@@ -102,6 +103,8 @@ class Population:
             with open(checkpoint_file, 'rb') as cp_file:
                 cp = pickle.load(cp_file)
             self.pop = cp['pop']
+            for ind in self.pop:
+                del ind.fitness.values
             self.gen_count = cp['gen_count']
             print('Resuming from last run of %d generation(s)' % self.gen_count)
             self.hof = cp['hof']
