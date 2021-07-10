@@ -54,7 +54,7 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         # self.addPrimitive(safe_mod, [float, float], float)
         # self.addPrimitive(safe_floordiv, [float, float], float)
         self.addPrimitive(operator.abs, [float], float)
-        self.addPrimitive(operator.neg, [float], float)
+        # self.addPrimitive(operator.neg, [float], float)
         self.addPrimitive(max, [float, float], float)
         self.addPrimitive(min, [float, float], float)
         self.addPrimitive(mean, [float, float], float)
@@ -62,7 +62,7 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         self.addPrimitive(math.cos, [float], float)
         self.addPrimitive(math.sin, [float], float)
         # self.addPrimitive(math.ceil, [float], float)
-        self.addPrimitive(math.floor, [float], float)
+        # self.addPrimitive(math.floor, [float], float)
 
         # Ternary primitives:
         self.addPrimitive(if_then_else, [bool, float, float], float)
