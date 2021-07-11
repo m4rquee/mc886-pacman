@@ -13,6 +13,8 @@ def relu(x): return max(0, x)
 def if_then_else(cond, a, b): return a if cond else b
 def dist(a, b, c, d): return abs(a - c) + abs(b - d)
 def esc_dist(a, b): return abs(a - b)
+def safe_sqrt(a): return math.sqrt(abs(a))
+def sqr(a): return a * a
 
 
 class PacmanSyntaxTree(PrimitiveSetTyped):
@@ -54,13 +56,15 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         # self.addPrimitive(safe_mod, [float, float], float)
         # self.addPrimitive(safe_floordiv, [float, float], float)
         self.addPrimitive(operator.abs, [float], float)
-        # self.addPrimitive(operator.neg, [float], float)
+        self.addPrimitive(operator.neg, [float], float)
         self.addPrimitive(max, [float, float], float)
         self.addPrimitive(min, [float, float], float)
         self.addPrimitive(mean, [float, float], float)
         self.addPrimitive(relu, [float], float)
         self.addPrimitive(math.cos, [float], float)
         self.addPrimitive(math.sin, [float], float)
+        self.addPrimitive(safe_sqrt, [float], float)
+        self.addPrimitive(sqr, [float], float)
         # self.addPrimitive(math.ceil, [float], float)
         # self.addPrimitive(math.floor, [float], float)
 
