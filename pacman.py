@@ -120,8 +120,8 @@ class GameState:
         # Book keeping
         state.data._agentMoved = agentIndex
         state.data.score += state.data.scoreChange
-        GameState.explored.add(self)
-        GameState.explored.add(state)
+        # GameState.explored.add(self)
+        # GameState.explored.add(state)
         return state
 
     def getLegalPacmanActions( self ):
@@ -473,7 +473,7 @@ def parseAgentArgs(str):
         opts[key] = val
     return opts
 
-def readCommand( argv ):
+def readCommand(argv, load_pacman=True):
     """
     Processes the command used to run pacman from the command line.
     """
@@ -523,6 +523,14 @@ def readCommand( argv ):
                       help='Turns on exception handling and timeouts during games', default=False)
     parser.add_option('--timeout', dest='timeout', type='int',
                       help=default('Maximum length of time an agent can spend computing in a single game'), default=30)
+    parser.add_option('-s', '--population_size', type='int', dest='npop',
+                      help=default('The population size to evolve'),
+                      default=100)
+    parser.add_option('-e', '--num_generations', type='int', dest='ngen',
+                      help=default('The number of generations'), default=10)
+    parser.add_option('--checkpoint_file', dest='checkpoint_file', type='str',
+                      help='Resumes from last evolution checkpoint',
+                      default=None)
 
     options, otherjunk = parser.parse_args(argv)
     if len(otherjunk) != 0:
@@ -538,13 +546,15 @@ def readCommand( argv ):
 
     # Choose a Pacman agent
     noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
-    pacmanType = loadAgent(options.pacman, noKeyboard)
     agentOpts = parseAgentArgs(options.agentArgs)
     if options.numTraining > 0:
         args['numTraining'] = options.numTraining
         if 'numTraining' not in agentOpts: agentOpts['numTraining'] = options.numTraining
-    pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
-    args['pacman'] = pacman
+    args['pacman'] = None
+    if load_pacman:
+        pacmanType = loadAgent(options.pacman, noKeyboard)
+        pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
+        args['pacman'] = pacman
 
     # Don't display training games
     if 'numTrain' in agentOpts:
@@ -582,6 +592,9 @@ def readCommand( argv ):
         replayGame(**recorded)
         sys.exit(0)
 
+    args['npop'] = options.npop  # saves the population size
+    args['ngen'] = options.ngen  # saves the number of generations
+    args['checkpoint_file'] = options.checkpoint_file  # saves the file name
     return args
 
 def loadAgent(pacman, nographics):
@@ -625,13 +638,15 @@ def replayGame( layout, actions, display ):
 
     display.finish()
 
-def runGames( layout, pacman, ghosts, display, numGames, record, numTraining = 0, catchExceptions=False, timeout=30 ):
+def runGames(layout, pacman, ghosts, display, numGames, record, numTraining=0,
+             catchExceptions=False, timeout=30, **kwargs):
     import __main__
     __main__.__dict__['_display'] = display
 
     rules = ClassicGameRules(timeout)
     games = []
 
+    scores, wins, move_count = [], [], []
     for i in range( numGames ):
         beQuiet = i < numTraining
         if beQuiet:
@@ -645,6 +660,9 @@ def runGames( layout, pacman, ghosts, display, numGames, record, numTraining = 0
         game = rules.newGame( layout, pacman, ghosts, gameDisplay, beQuiet, catchExceptions)
         game.run()
         if not beQuiet: games.append(game)
+        scores.append(game.state.getScore())
+        wins.append(game.state.isWin())
+        move_count.append(len(game.moveHistory))
 
         if record:
             import time, pickle
@@ -654,16 +672,17 @@ def runGames( layout, pacman, ghosts, display, numGames, record, numTraining = 0
             pickle.dump(components, f)
             f.close()
 
+    avg_score = sum(scores) / float(len(scores))
+    winRate = wins.count(True) / float(len(wins))
+    avg_move_count = sum(move_count) / float(len(move_count))
     if (numGames-numTraining) > 0:
-        scores = [game.state.getScore() for game in games]
-        wins = [game.state.isWin() for game in games]
-        winRate = wins.count(True)/ float(len(wins))
-        print('Average Score:', sum(scores) / float(len(scores)))
+        print('Average Score:', avg_score)
+        print('Average Move Count:', avg_move_count)
         print('Scores:       ', ', '.join([str(score) for score in scores]))
         print('Win Rate:      %d/%d (%.2f)' % (wins.count(True), len(wins), winRate))
         print('Record:       ', ', '.join([ ['Loss', 'Win'][int(w)] for w in wins]))
 
-    return games
+    return games, avg_score, winRate, avg_move_count
 
 if __name__ == '__main__':
     """
