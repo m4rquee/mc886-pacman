@@ -1,3 +1,4 @@
+import operator
 import pickle
 from datetime import datetime
 from random import random
@@ -18,7 +19,7 @@ def checkpoint_save(pop, gen_count, hof):
 
 class Population:
     WIN_WEIGHT = 10000
-    MOVE_WEIGHT = 0.5
+    MOVE_WEIGHT = 0.1
 
     def eval_individual(self, individual, show_gui=False):
         # Transform the tree expression in a callable function
@@ -37,7 +38,9 @@ class Population:
         Randomly picks a replacement, insert, or shrink mutation.
         """
         roll = random()
-        if roll <= 0.30:  # 30%
+        if roll <= 0.05:  # 5%
+            return gp.mutEphemeral(individual, 'all')
+        elif roll <= 0.30:  # 25%
             return gp.mutUniform(individual, expr=self.toolbox.expr_mut, pset=self.pset)
         elif roll <= 0.50:  # 20%
             return gp.mutNodeReplacement(individual, pset=self.pset)
@@ -55,6 +58,8 @@ class Population:
         stats_fit.register('max', np.max)
         stats_moves = tools.Statistics(lambda ind: ind.fitness.values[1])
         stats_moves.register('moves avg', np.mean)
+        stats_moves.register('min', np.min)
+        stats_moves.register('max', np.max)
         mstats = tools.MultiStatistics(fitness=stats_fit, moves=stats_moves)
 
         for block in range(0, self.ngen, self.save_freq):
@@ -64,19 +69,23 @@ class Population:
                                        halloffame=self.hof, verbose=True)
             self.gen_count += self.save_freq
             checkpoint_save(self.pop, self.gen_count, self.hof)
+            for ind in self.pop: del ind.fitness.values  # reset the pop values
+            # Reevaluate the hall of fame:
+            for ind in self.hof:
+                ind.fitness.values = self.eval_individual(ind)
         return self.pop, mstats, self.hof
 
     def __init__(self, n, ngen, tries, game_runner, save_freq=25,
                  checkpoint_file=None):
         # Startup configurations:
         self.n = n
-        self.lambda_ = int(self.n * 1.5)
+        self.lambda_ = int(self.n * 1.25)
         self.ngen = ngen
         self.tries = tries
         self.game_runner = game_runner
         self.save_freq = min(ngen, save_freq)
         creator.create('FitnessMax', base.Fitness,
-                       weights=(1.0, -Population.MOVE_WEIGHT))
+                       weights=(1.0, Population.MOVE_WEIGHT))
         creator.create('Individual', gp.PrimitiveTree,
                        fitness=creator.FitnessMax)
 
@@ -91,11 +100,16 @@ class Population:
         self.toolbox.register('compile', gp.compile, pset=self.pset)
 
         self.toolbox.register('evaluate', self.eval_individual)
-        tournsize = int(self.n * 0.1)
+        tournsize = 10
         self.toolbox.register('select', tools.selTournament, tournsize=tournsize)
         self.toolbox.register('mate', gp.cxOnePoint)
         self.toolbox.register('expr_mut', gp.genHalfAndHalf, min_=1, max_=5)
         self.toolbox.register('mutate', self.random_mutation_operator)
+
+        # Koza's suggested depth limit:
+        limiter = gp.staticLimit(key=operator.attrgetter("height"), max_value=17)
+        self.toolbox.decorate("mate", limiter)
+        self.toolbox.decorate("mutate", limiter)
 
         self.gen_count = 0
         self.hof = None
