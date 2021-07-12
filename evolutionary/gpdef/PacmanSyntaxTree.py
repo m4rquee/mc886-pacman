@@ -61,7 +61,7 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         self.addPrimitive(min, [float, float], float)
         self.addPrimitive(mean, [float, float], float)
         self.addPrimitive(relu, [float], float)
-        self.addPrimitive(math.cos, [float], float)
+        # self.addPrimitive(math.cos, [float], float)
         self.addPrimitive(math.sin, [float], float)
         self.addPrimitive(safe_sqrt, [float], float)
         self.addPrimitive(sqr, [float], float)
@@ -73,7 +73,7 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
 
         # Distance primitives:
         self.addPrimitive(esc_dist, [float, float], float)
-        self.addPrimitive(dist, [float, float, float, float], float)
+        # self.addPrimitive(dist, [float, float, float, float], float)
 
         # Comparison operations:
         self.addPrimitive(operator.lt, [float, float], bool)
