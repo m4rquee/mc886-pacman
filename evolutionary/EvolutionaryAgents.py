@@ -1,6 +1,6 @@
 import math
 from functools import partial
-from random import choice
+from random import choice, choices
 
 import numpy as np
 
@@ -106,16 +106,19 @@ class EvolutionaryAgent(Agent):
                            'PosX': PosX, 'PosY': PosY}
         partial_func = partial(self.tree_func, **condensed_state)
 
-        legal_actions = map(Actions.directionToVector, state.getLegalPacmanActions())
+        legal_actions = state.getLegalPacmanActions()
+        if len(legal_actions) == 1:
+            return legal_actions.pop()  # the only option
+        elif Directions.STOP in legal_actions:
+            legal_actions.remove(Directions.STOP)  # avoid stopping
 
-        q_values = [(-math.inf, Actions.directionToVector(Directions.STOP))]
-        for X, Y in legal_actions:
+        q_values = []
+        for X, Y in map(Actions.directionToVector, legal_actions):
             try:
-                q_values.append((partial_func(ActionX=X, ActionY=Y), (X, Y)))
+                q_values.append(partial_func(ActionX=X, ActionY=Y))
             except Exception as excep:
                 print('\nError while evaluation tree:')
                 print(excep)
                 print('ActionX=%d, ActionY=%d, condensed_state=%s\n' % (X, Y, str(condensed_state)))
-        best_q = max(q_values)[0]
-        action = choice([pair[1] for pair in q_values if pair[0] == best_q])
-        return Actions.vectorToDirection(action)
+                return choice(legal_actions)  # safety measure
+        return choices(legal_actions, q_values)[0]
