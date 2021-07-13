@@ -63,10 +63,10 @@ class Population:
         mstats = tools.MultiStatistics(fitness=stats_fit, moves=stats_moves)
 
         for block in range(0, self.ngen, self.save_freq):
-            algorithms.eaMuCommaLambda(self.pop, self.toolbox, self.n,
-                                       self.lambda_, 0.5, 0.4,
-                                       ngen=self.save_freq, stats=mstats,
-                                       halloffame=self.hof, verbose=True)
+            algorithms.eaMuPlusLambda(self.pop, self.toolbox, self.n,
+                                      self.lambda_, 0.8, 0.1,
+                                      ngen=self.save_freq, stats=mstats,
+                                      halloffame=self.hof, verbose=True)
             self.gen_count += self.save_freq
             checkpoint_save(self.pop, self.gen_count, self.hof)
             for ind in self.pop: del ind.fitness.values  # reset the pop values
@@ -79,7 +79,7 @@ class Population:
                  checkpoint_file=None):
         # Startup configurations:
         self.n = n
-        self.lambda_ = int(self.n * 1.25)
+        self.lambda_ = int(self.n * 0.25)
         self.ngen = ngen
         self.tries = tries
         self.game_runner = game_runner
@@ -103,7 +103,7 @@ class Population:
         tournsize = 10
         self.toolbox.register('select', tools.selTournament, tournsize=tournsize)
         self.toolbox.register('mate', gp.cxOnePoint)
-        self.toolbox.register('expr_mut', gp.genHalfAndHalf, min_=1, max_=5)
+        self.toolbox.register('expr_mut', gp.genHalfAndHalf, min_=1, max_=3)
         self.toolbox.register('mutate', self.random_mutation_operator)
 
         # Koza's suggested depth limit:
