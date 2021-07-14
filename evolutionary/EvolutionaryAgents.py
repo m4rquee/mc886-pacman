@@ -4,6 +4,7 @@ from random import choice, choices
 
 import numpy as np
 
+from evolutionary.gpdef.PacmanSyntaxTree import relu
 from game import Agent, Actions, Directions
 from util import nearestPoint, manhattanDistance
 
@@ -124,7 +125,8 @@ class EvolutionaryAgent(Agent):
         q_values = []
         for X, Y in map(Actions.directionToVector, legal_actions):
             try:
-                q_values.append(abs(partial_func(ActionX=X, ActionY=Y)))
+                q_value = partial_func(ActionX=X, ActionY=Y)
+                q_values.append(relu(q_value))  # make negatives zero
             except Exception as excep:
                 print('\nError while evaluation tree:')
                 print(excep)
