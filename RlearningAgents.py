@@ -31,9 +31,9 @@ class RlearningAgent(Agent):
         return self.q_value[(state, action)]
 
     # return the maximum Q of state
-    def getMaxQ(self, state):
+    def getMaxQ(self, state, actions):
         q_list = []
-        for a in state.getLegalPacmanActions():
+        for a in actions:
             q = self.getQValue(state,a)
             q_list.append(q)
         if len(q_list) ==0:
@@ -46,10 +46,9 @@ class RlearningAgent(Agent):
         self.q_value[(state, action)] = q + self.alpha * (reward + self.gamma * qmax - q)
 
     # return the action that maximises Q for given state
-    def greedyAction(self, state):
-        legal = state.getLegalPacmanActions()
+    def greedyAction(self, state, actions):
         tmp = Counter()
-        for action in legal:
+        for action in actions:
           tmp[action] = self.getQValue(state, action)
         return tmp.argMax()
 
@@ -58,30 +57,40 @@ class RlearningAgent(Agent):
         # the legal action of this state
         legal = state.getLegalPacmanActions()
 
+        # Avoid stopping
+        if Directions.STOP in legal:
+            legal.remove(Directions.STOP)
+
+        pacman_position = state.getPacmanPosition()
+        ghost_positions = state.getGhostPositions()
+        food_locations = state.getFood()
+        capsule_locations = state.getCapsules()
+
+        curr_state = str(legal) + str(pacman_position) + str(ghost_positions) + str(food_locations) + str(capsule_locations)
+
         # update Q-value, reward = d_score
         reward = state.getScore() - self.score 
         if len(self.lastStates) > 0:
             last_state = self.lastStates[-1]
             last_action = self.lastActions[-1]
 
-            max_q = self.getMaxQ(state)
+            max_q = self.getMaxQ(curr_state, legal)
             self.updateQ(last_state, last_action, reward, max_q)
 
         # epsilon greedy
         if flipCoin(self.epsilon):
             action = choice(legal)
         else:
-            action = self.greedyAction(state)
+            action = self.greedyAction(curr_state, legal)
 
         # update attributes
         self.score = state.getScore()
-        self.lastStates.append(state)
+        self.lastStates.append(curr_state)
         self.lastActions.append(action)
 
         return action
 
     def final(self, state):
-
         # update Q-value, reward = d_score
         reward = state.getScore() - self.score
         last_state = self.lastStates[-1]
