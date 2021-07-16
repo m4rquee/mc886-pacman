@@ -183,9 +183,9 @@ class RlearningAgent(Agent):
                 reward += 500
             # Punish stalling and reward moving forward
             if len(self.lastActions) >= 2 and last_action == Directions.REVERSE[self.lastActions[-2]]:
-                reward -= 10000
+                reward -= 1000
             if len(self.lastActions) >= 2 and last_action == self.lastActions[-2]:
-                reward += 1000
+                reward += 100
 
             max_q = self.getMaxQ(curr_state, legal)
             self.updateQ(last_state, last_action, reward, max_q)
