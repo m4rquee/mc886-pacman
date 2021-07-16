@@ -4,6 +4,7 @@ from random import choice, choices
 
 import numpy as np
 
+from evolutionary.gpdef.PacmanSyntaxTree import relu
 from game import Agent, Actions, Directions
 from util import nearestPoint, manhattanDistance
 
@@ -44,8 +45,9 @@ def closest_ghosts(state, pos):
         dists = list(map(agent_dist, non_edible))
         neGhostX, neGhostY = non_edible[np.argmin(dists)]
         neGhostDist = min(dists)
-    return eGhostX, eGhostY, eGhostDist, len(edible), \
-           neGhostX, neGhostY, neGhostDist, len(non_edible)
+    total = len(edible) + len(non_edible)
+    return eGhostX, eGhostY, eGhostDist, len(edible) / total, \
+           neGhostX, neGhostY, neGhostDist, len(non_edible) / total
 
 
 def next_wall(state, pos, current_dir):
@@ -65,6 +67,12 @@ class EvolutionaryAgent(Agent):
     def __init__(self, tree_func, index=0):
         super().__init__(index)
         self.tree_func = tree_func
+        self.MoveCount = 0
+        self.food_total, self.capsule_total = 0, 0
+
+    def registerInitialState(self, state):
+        self.food_total = state.getNumFood()
+        self.capsule_total = len(state.getCapsules())
 
     def getAction(self, state):
         # Get higher level state attributes:
@@ -80,8 +88,8 @@ class EvolutionaryAgent(Agent):
             closest_ghosts(state, nearest)
         DistToNextJunction, GhostBeforeJunction = \
             next_wall(state, nearest, current_dir)
-        GdPillCount = state.getNumFood()
-        GdPowerPillCount = len(state.getCapsules())
+        GdPillCount = state.getNumFood() / self.food_total
+        GdPowerPillCount = len(state.getCapsules()) / self.capsule_total
         Score = state.getScore()
         DirectionX, DirectionY = current_dir
 
@@ -103,7 +111,9 @@ class EvolutionaryAgent(Agent):
                            'GdNonEdibleGhostCount': GdNonEdibleGhostCount,
                            'Score': Score, 'DirectionX': DirectionX,
                            'DirectionY': DirectionY,
+                           'MoveCount': self.MoveCount,
                            'PosX': PosX, 'PosY': PosY}
+        self.MoveCount += 1
         partial_func = partial(self.tree_func, **condensed_state)
 
         legal_actions = state.getLegalPacmanActions()
@@ -115,7 +125,8 @@ class EvolutionaryAgent(Agent):
         q_values = []
         for X, Y in map(Actions.directionToVector, legal_actions):
             try:
-                q_values.append(partial_func(ActionX=X, ActionY=Y))
+                q_value = partial_func(ActionX=X, ActionY=Y)
+                q_values.append(relu(q_value))  # make negatives zero
             except Exception as excep:
                 print('\nError while evaluation tree:')
                 print(excep)

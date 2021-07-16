@@ -27,7 +27,7 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
                    'GdPillCount': float, 'GdPowerPillCount': float,
                    'GdEdibleGhostCount': float, 'GdNonEdibleGhostCount': float,
                    'Score': float, 'DirectionX': float, 'DirectionY': float,
-                   'PosX': float, 'PosY': float,
+                   'PosX': float, 'PosY': float, 'MoveCount': float,
                    'ActionX': float, 'ActionY': float}
     FLOAT_CONSTS = [
         -2.0, -1.0, 0.0, 0.1, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 100.0, 1000.0
@@ -63,7 +63,7 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         self.addPrimitive(relu, [float], float)
         # self.addPrimitive(math.cos, [float], float)
         self.addPrimitive(math.sin, [float], float)
-        self.addPrimitive(safe_sqrt, [float], float)
+        # self.addPrimitive(safe_sqrt, [float], float)
         self.addPrimitive(sqr, [float], float)
         # self.addPrimitive(math.ceil, [float], float)
         # self.addPrimitive(math.floor, [float], float)
@@ -72,7 +72,7 @@ class PacmanSyntaxTree(PrimitiveSetTyped):
         self.addPrimitive(if_then_else, [bool, float, float], float)
 
         # Distance primitives:
-        self.addPrimitive(esc_dist, [float, float], float)
+        # self.addPrimitive(esc_dist, [float, float], float)
         # self.addPrimitive(dist, [float, float, float, float], float)
 
         # Comparison operations:
