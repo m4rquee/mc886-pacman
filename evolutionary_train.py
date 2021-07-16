@@ -19,7 +19,8 @@ if __name__ == '__main__':
     runner = partial(runGames, **args)
     checkpoint_file = args['checkpoint_file']
     population = Population(args['npop'], args['ngen'], args['numGames'],
-                            runner, checkpoint_file=checkpoint_file)
+                            args['layout_name'], runner,
+                            checkpoint_file=checkpoint_file)
     pop, stats, hof = population.evolve()
 
     input_str = input('Press enter to see the best individual(s) running (you may type the number of tries)... ')
